@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestionnaire de Tâches ESN - Directeur des Opérations</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .task-card {
+            transition: all 0.3s ease;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .priority-high { border-left: 4px solid #ef4444; }
+        .priority-medium { border-left: 4px solid #f59e0b; }
+        .priority-low { border-left: 4px solid #10b981; }
+        
+        .context-clients { background-color: #dbeafe; }
+        .context-equipes { background-color: #dcfce7; }
+        .context-strategy { background-color: #fef3c7; }
+        .context-admin { background-color: #f3e8ff; }
+        .context-communication { background-color: #fce7f3; }
+        .context-priority { background-color: #fee2e2; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Données initiales avec vos projets réels
+        const initialTasks = [
+            {
+                id: 1,
+                title: "Organiser workshop cybersécurité avec Mathilde",
+                description: "Planifier et organiser un workshop sur la cybersécurité",
+                project: "Projet Cybersécurité",
+                context: "@Équipes",
+                priority: "Haute",
+                status: "todo",
+                dueDate: "2025-09-05",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Contacter Mathilde pour disponibilités", completed: false },
+                    { id: 2, text: "Réserver salle de formation", completed: false },
+                    { id: 3, text: "Préparer contenu workshop", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 2,
+                title: "Organiser meeting projet cybersécurité avec Mathilde",
+                description: "Réunion de cadrage et définition des objectifs",
+                project: "Projet Cybersécurité",
+                context: "@Équipes",
+                priority: "Haute",
+                status: "todo",
+                dueDate: "2025-08-30",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Appeler Mathilde pour fixer RDV", completed: false },
+                    { id: 2, text: "Préparer agenda de réunion", completed: false },
+                    { id: 3, text: "Envoyer invitation calendrier", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 3,
+                title: "Organiser meeting projet Humatrix avec Amine",
+                description: "Réunion de lancement et définition du périmètre",
+                project: "Projet Humatrix",
+                context: "@Équipes",
+                priority: "Haute",
+                status: "todo",
+                dueDate: "2025-09-02",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Contacter Amine pour planning", completed: false },
+                    { id: 2, text: "Analyser besoins techniques préliminaires", completed: false },
+                    { id: 3, text: "Préparer questions techniques", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 4,
+                title: "Démarrer point de suivi client Labelvie",
+                description: "Mettre en place un suivi régulier avec Labelvie",
+                project: "Suivi Clients",
+                context: "@Clients",
+                priority: "Haute",
+                status: "todo",
+                dueDate: "2025-08-28",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Identifier contact principal Labelvie", completed: false },
+                    { id: 2, text: "Préparer template suivi client", completed: false },
+                    { id: 3, text: "Premier appel de suivi", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 5,
+                title: "Démarrer point de suivi client SAHAM Bank",
+                description: "Établir un processus de suivi avec SAHAM Bank",
+                project: "Suivi Clients",
+                context: "@Clients",
+                priority: "Haute",
+                status: "todo",
+                dueDate: "2025-08-29",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Contacter SAHAM Bank", completed: false },
+                    { id: 2, text: "Planifier première réunion", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 6,
+                title: "Réduire délai de paiement freelances à J+30",
+                description: "Modifier les conditions de paiement freelances",
+                project: "Optimisation Processus",
+                context: "@Administratif",
+                priority: "Moyenne",
+                status: "todo",
+                dueDate: "2025-09-15",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Analyser impact trésorerie", completed: false },
+                    { id: 2, text: "Réviser contrats types", completed: false },
+                    { id: 3, text: "Communiquer aux freelances", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            },
+            {
+                id: 7,
+                title: "Mise en place de BoundManager",
+                description: "Déployer et configurer BoundManager",
+                project: "Outils & Infrastructure",
+                context: "@Équipes",
+                priority: "Moyenne",
+                status: "todo",
+                dueDate: "2025-09-20",
+                progress: 0,
+                notes: "",
+                actions: [
+                    { id: 1, text: "Obtenir spécifications techniques", completed: false },
+                    { id: 2, text: "Installer et configurer", completed: false },
+                    { id: 3, text: "Former les équipes", completed: false }
+                ],
+                createdAt: "2025-08-26"
+            }
+        ];
+
+        const projects = [
+            "Projet Cybersécurité",
+            "Projet Humatrix", 
+            "Suivi Clients",
+            "Optimisation Processus",
+            "Outils & Infrastructure"
+        ];
+
+        const contexts = [
+            { value: "@Clients", label: "Clients", color: "context-clients" },
+            { value: "@Équipes", label: "Équipes", color: "context-equipes" },
+            { value: "@Stratégie", label: "Stratégie", color: "context-strategy" },
+            { value: "@Administratif", label: "Administratif", color: "context-admin" },
+            { value: "@Communication", label: "Communication", color: "context-communication" },
+            { value: "@Prioritaire", label: "Prioritaire", color: "context-priority" }
+        ];
+
+        function App() {
+            const [tasks, setTasks] = useState(() => {
+                const saved = localStorage.getItem('esn-tasks');
+                return saved ? JSON.parse(saved) : initialTasks;
+            });
+            
+            const [activeTab, setActiveTab] = useState('inbox');
+            const [editingTask, setEditingTask] = useState(null);
+            const [newTask, setNewTask] = useState({
+                title: '',
+                description: '',
+                project: projects[0],
+                context: '@Clients',
+                priority: 'Moyenne',
+                dueDate: ''
+            });
+
+            // Sauvegarde automatique
+            useEffect(() => {
+                localStorage.setItem('esn-tasks', JSON.stringify(tasks));
+            }, [tasks]);
+
+            const addTask = () => {
+                if (newTask.title.trim()) {
+                    const task = {
+                        id: Date.now(),
+                        ...newTask,
+                        status: 'todo',
+                        progress: 0,
+                        notes: '',
+                        actions: [],
+                        createdAt: new Date().toISOString().split('T')[0]
+                    };
+                    setTasks([...tasks, task]);
+                    setNewTask({
+                        title: '',
+                        description: '',
+                        project: projects[0],
+                        context: '@Clients',
+                        priority: 'Moyenne',
+                        dueDate: ''
+                    });
+                }
+            };
+
+            const updateTask = (taskId, updates) => {
+                setTasks(tasks.map(task => 
+                    task.id === taskId ? { ...task, ...updates } : task
+                ));
+            };
+
+            const toggleAction = (taskId, actionId) => {
+                setTasks(tasks.map(task => {
+                    if (task.id === taskId) {
+                        const updatedActions = task.actions.map(action =>
+                            action.id === actionId ? { ...action, completed: !action.completed } : action
+                        );
+                        const completedActions = updatedActions.filter(a => a.completed).length;
+                        const progress = updatedActions.length > 0 ? Math.round((completedActions / updatedActions.length) * 100) : 0;
+                        return { ...task, actions: updatedActions, progress };
+                    }
+                    return task;
+                }));
+            };
+
+            const exportToJSON = () => {
+                const dataStr = JSON.stringify(tasks, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `taches-esn-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            };
+
+            const exportToCSV = () => {
+                const headers = ['ID', 'Titre', 'Description', 'Projet', 'Contexte', 'Priorité', 'Statut', 'Échéance', 'Progression', 'Notes'];
+                const csvContent = [
+                    headers.join(','),
+                    ...tasks.map(task => [
+                        task.id,
+                        `"${task.title}"`,
+                        `"${task.description}"`,
+                        `"${task.project}"`,
+                        task.context,
+                        task.priority,
+                        task.status,
+                        task.dueDate,
+                        task.progress,
+                        `"${task.notes}"`
+                    ].join(','))
+                ].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `taches-esn-${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            const filteredTasks = tasks.filter(task => {
+                switch(activeTab) {
+                    case 'inbox': return task.status === 'todo';
+                    case 'projects': return true;
+                    case 'waiting': return task.status === 'waiting';
+                    case 'completed': return task.status === 'completed';
+                    default: return true;
+                }
+            });
+
+            const stats = {
+                total: tasks.length,
+                todo: tasks.filter(t => t.status === 'todo').length,
+                inProgress: tasks.filter(t => t.status === 'inProgress').length,
+                completed: tasks.filter(t => t.status === 'completed').length,
+                totalActions: tasks.reduce((sum, task) => sum + task.actions.length, 0),
+                completedActions: tasks.reduce((sum, task) => sum + task.actions.filter(a => a.completed).length, 0)
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <div className="max-w-7xl mx-auto p-6">
+                        {/* Header */}
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                Gestionnaire de Tâches ESN - Directeur des Opérations
+                            </h1>
+                            <p className="text-gray-600">Interface avec export/import et sauvegarde cloud</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            {/* Sidebar */}
+                            <div className="lg:col-span-1 space-y-6">
+                                {/* Nouvelle Tâche */}
+                                <div className="bg-white rounded-lg shadow-sm p-6">
+                                    <h2 className="text-lg font-semibold mb-4 flex items-center">
+                                        ➕ Nouvelle Tâche
+                                    </h2>
+                                    <div className="space-y-3">
+                                        <input
+                                            type="text"
+                                            placeholder="Titre de la tâche"
+                                            value={newTask.title}
+                                            onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <textarea
+                                            placeholder="Description (optionnelle)"
+                                            value={newTask.description}
+                                            onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            rows="2"
+                                        />
+                                        <select
+                                            value={newTask.context}
+                                            onChange={(e) => setNewTask({...newTask, context: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            {contexts.map(ctx => (
+                                                <option key={ctx.value} value={ctx.value}>{ctx.label}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={newTask.priority}
+                                            onChange={(e) => setNewTask({...newTask, priority: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="Haute">Haute</option>
+                                            <option value="Moyenne">Moyenne</option>
+                                            <option value="Basse">Basse</option>
+                                        </select>
+                                        <select
+                                            value={newTask.project}
+                                            onChange={(e) => setNewTask({...newTask, project: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            {projects.map(project => (
+                                                <option key={project} value={project}>{project}</option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="date"
+                                            value={newTask.dueDate}
+                                            onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <button
+                                            onClick={addTask}
+                                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                                        >
+                                            ➕ Ajouter la tâche
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Sauvegarde & Export */}
+                                <div className="bg-white rounded-lg shadow-sm p-6">
+                                    <h2 className="text-lg font-semibold mb-4 flex items-center">
+                                        💾 Sauvegarde & Export
+                                    </h2>
+                                    <div className="space-y-3">
+                                        <p className="text-sm text-gray-600">
+                                            Dernière sauvegarde: {new Date().toLocaleString('fr-FR')}
+                                        </p>
+                                        <button
+                                            onClick={exportToJSON}
+                                            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm"
+                                        >
+                                            📄 Exporter JSON
+                                        </button>
+                                        <button
+                                            onClick={exportToCSV}
+                                            className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors text-sm"
+                                        >
+                                            📊 Exporter Excel/CSV
+                                        </button>
+                                        <button
+                                            onClick={() => window.open('https://drive.google.com', '_blank')}
+                                            className="w-full bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition-colors text-sm"
+                                        >
+                                            ☁️ Ouvrir Google Drive
+                                        </button>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            💡 Sauvegarde automatique dans le navigateur
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Statistiques */}
+                                <div className="bg-white rounded-lg shadow-sm p-6">
+                                    <h2 className="text-lg font-semibold mb-4">📊 Statistiques</h2>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span>Total des tâches:</span>
+                                            <span className="font-semibold">{stats.total}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>À faire:</span>
+                                            <span className="font-semibold text-orange-600">{stats.todo}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>En cours:</span>
+                                            <span className="font-semibold text-blue-600">{stats.inProgress}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Terminées:</span>
+                                            <span className="font-semibold text-green-600">{stats.completed}</span>
+                                        </div>
+                                        <hr className="my-2" />
+                                        <div className="flex justify-between">
+                                            <span>Total actions:</span>
+                                            <span className="font-semibold">{stats.totalActions}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Actions terminées:</span>
+                                            <span className="font-semibold text-green-600">{stats.completedActions}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="lg:col-span-3">
+                                {/* Tabs */}
+                                <div className="flex space-x-1 mb-6">
+                                    {[
+                                        { id: 'inbox', label: 'Boîte de réception', count: stats.todo },
+                                        { id: 'projects', label: 'Projets', count: projects.length },
+                                        { id: 'waiting', label: 'En attente', count: 0 },
+                                        { id: 'completed', label: 'Terminées', count: stats.completed }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                                activeTab === tab.id
+                                                    ? 'bg-blue-600 text-white'
+                                                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            {tab.label} {tab.count > 0 && (
+                                                <span className={`ml-1 px-2 py-1 rounded-full text-xs ${
+                                                    activeTab === tab.id ? 'bg-blue-500' : 'bg-gray-200'
+                                                }`}>
+                                                    {tab.count}
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Tasks List */}
+                                <div className="space-y-4">
+                                    <h2 className="text-xl font-semibold text-gray-900">
+                                        {activeTab === 'inbox' && 'Tâches à traiter'}
+                                        {activeTab === 'projects' && 'Vue par projets'}
+                                        {activeTab === 'waiting' && 'Tâches en attente'}
+                                        {activeTab === 'completed' && 'Tâches terminées'}
+                                    </h2>
+                                    <p className="text-gray-600">
+                                        {activeTab === 'inbox' && `Tâches en attente de traitement (${filteredTasks.length} tâches)`}
+                                        {activeTab === 'projects' && `Organisation par projets (${filteredTasks.length} tâches)`}
+                                        {activeTab === 'waiting' && `Tâches en attente d'action externe (${filteredTasks.length} tâches)`}
+                                        {activeTab === 'completed' && `Tâches accomplies (${filteredTasks.length} tâches)`}
+                                    </p>
+
+                                    {filteredTasks.map(task => (
+                                        <div key={task.id} className={`task-card bg-white rounded-lg shadow-sm p-6 priority-${task.priority.toLowerCase()}`}>
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex-1">
+                                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                                        {task.title}
+                                                    </h3>
+                                                    <p className="text-gray-600 mb-3">{task.description}</p>
+                                                    
+                                                    <div className="flex flex-wrap gap-2 mb-3">
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                            task.priority === 'Haute' ? 'bg-red-100 text-red-800' :
+                                                            task.priority === 'Moyenne' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-green-100 text-green-800'
+                                                        }`}>
+                                                            {task.priority}
+                                                        </span>
+                                                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                                            À faire
+                                                        </span>
+                                                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                                                            {task.project}
+                                                        </span>
+                                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                            contexts.find(c => c.value === task.context)?.color || 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {task.actions.filter(a => a.completed).length}/{task.actions.length} actions
+                                                        </span>
+                                                    </div>
+
+                                                    {task.dueDate && (
+                                                        <div className="flex items-center text-sm text-gray-500 mb-3">
+                                                            🗓️ {new Date(task.dueDate).toLocaleDateString('fr-FR')}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Progress Bar */}
+                                                    <div className="mb-4">
+                                                        <div className="flex justify-between text-sm text-gray-600 mb-1">
+                                                            <span>Progression</span>
+                                                            <span>{task.progress}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                                            <div 
+                                                                className={`h-2 rounded-full transition-all duration-300 ${
+                                                                    task.progress < 30 ? 'bg-red-500' :
+                                                                    task.progress < 70 ? 'bg-yellow-500' : 'bg-green-500'
+                                                                }`}
+                                                                style={{ width: `${task.progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() => setEditingTask(editingTask === task.id ? null : task.id)}
+                                                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                                                        title="Éditer la tâche"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Actions */}
+                                            {task.actions.length > 0 && (
+                                                <div className="mb-4">
+                                                    <h4 className="font-medium text-gray-900 mb-2">
+                                                        📋 Actions ({task.actions.filter(a => a.completed).length}/{task.actions.length})
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {task.actions.map(action => (
+                                                            <label key={action.id} className="flex items-center space-x-2 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={action.completed}
+                                                                    onChange={() => toggleAction(task.id, action.id)}
+                                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                                <span className={action.completed ? 'line-through text-gray-500' : 'text-gray-700'}>
+                                                                    {action.text}
+                                                                </span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Notes Section */}
+                                            <div className="border-t pt-4">
+                                                <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                                                    📝 Notes
+                                                    <button
+                                                        onClick={() => setEditingTask(editingTask === task.id ? null : task.id)}
+                                                        className="ml-2 text-sm text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                </h4>
+                                                {editingTask === task.id ? (
+                                                    <div className="space-y-2">
+                                                        <textarea
+                                                            value={task.notes}
+                                                            onChange={(e) => updateTask(task.id, { notes: e.target.value })}
+                                                            placeholder="Ajoutez vos notes ici..."
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                            rows="3"
+                                                        />
+                                                        <button
+                                                            onClick={() => setEditingTask(null)}
+                                                            className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                                                        >
+                                                            💾 Sauvegarder
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-gray-600 italic">
+                                                        {task.notes || "Cliquez sur l'icône crayon pour ajouter des notes..."}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {filteredTasks.length === 0 && (
+                                        <div className="text-center py-12">
+                                            <div className="text-gray-400 text-6xl mb-4">📋</div>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune tâche</h3>
+                                            <p className="text-gray-500">
+                                                {activeTab === 'inbox' && "Toutes vos tâches sont traitées !"}
+                                                {activeTab === 'waiting' && "Aucune tâche en attente."}
+                                                {activeTab === 'completed' && "Aucune tâche terminée pour le moment."}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+<!-- Ajouter Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Créer un graphique de progression
+const createProgressChart = () => {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Terminées', 'En cours', 'À faire'],
+            datasets: [{
+                data: [stats.completed, stats.inProgress, stats.todo],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }]
+        }
+    });
+};
+</script>
+const [clients, setClients] = useState([
+    { id: 1, name: 'Labelvie', contact: 'contact@labelvie.ma', lastContact: '2025-08-20' },
+    { id: 2, name: 'SAHAM Bank', contact: 'it@saham.ma', lastContact: '2025-08-18' },
+    { id: 3, name: 'PVCP', contact: 'direction@pvcp.ma', lastContact: '2025-08-15' }
+]);
